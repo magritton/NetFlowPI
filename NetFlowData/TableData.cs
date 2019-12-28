@@ -3,7 +3,7 @@ using System;
 
 namespace NetFlowPI.Data
 {
-    [Table(Name = "Netflow.NetFlowData")]
+    [Table(Schema="NetFlow",Name="NetFlowData")]
     public class NetFlow
     {
         private Guid _NetFlowID;
@@ -66,9 +66,9 @@ namespace NetFlowPI.Data
 
         }
 
-        private ushort _Uptime;
+        private long _Uptime;
         [Column(Storage = "_Uptime")]
-        public ushort UpTime
+        public long UpTime
         {
             get
             {
@@ -365,12 +365,12 @@ namespace NetFlowPI.Data
 
 
         private String _IPV4_NEXT_HOP;
-        [Column(Storage = "_IPV4_NEXT_HOPIPV4_NEXT_HOP")]
+        [Column(Storage = "_IPV4_NEXT_HOP")]
         public String IPV4_NEXT_HOP
         {
             get
             {
-                return this.IPV4_NEXT_HOP;
+                return this._IPV4_NEXT_HOP;
             }
             set
             {

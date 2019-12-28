@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using NetFlowPI.Common;
 using NetFlowPI.Data;
 
 namespace System.Net.NetFlow
@@ -137,8 +138,10 @@ namespace System.Net.NetFlow
             return ret;
         }//end tostring
 
-        public string WriteToDB()
+        public void WriteToDB()
         {
+            DataFunctions df = new DataFunctions();
+
             string packet = this._bytes.Length + "b.";
             ushort version = _header.Version;
             ushort count = _header.Count;
@@ -146,17 +149,6 @@ namespace System.Net.NetFlow
             DateTime secs = _header.Secs;
             uint sequence = _header.Sequence;
             uint ID = _header.ID;
-
-            String ret = "";
-            //String ret = "NetFlow Packet " + this._bytes.Length + "b.\r\n"
-            //    + "Header " + "20b.:\r\n"
-            //    + "Version: " + _header.Version + "\r\n"
-            //    + "Count: " + _header.Count + "\r\n"
-            //    + "UpTime: " + _header.UpTime + "\r\n"
-            //    + "Secs: " + _header.Secs + "\r\n"
-            //    + "Sequence: " + _header.Sequence + "\r\n"
-            //    + "ID: " + _header.ID + "\r\n\n"
-            //    + "FlowSet`s " + (this._bytes.Length - 20) + "b.:\r\n\n";
 
             int a = 0;
 
@@ -167,32 +159,31 @@ namespace System.Net.NetFlow
                 ushort flowID = flows.ID;
                 ushort flowLength = flows.Length;
 
-                ret += "FlowSet [" + a + "]:" + "\r\n"
-                + "ID: " + flows.ID + "\r\n"
-                + "Length: " + flows.Length + "\r\n";
-
-                foreach (Byte bt in flows.ValueByte)
-                {
-                    ret += "0x" + bt.ToString("X") + " ";
-                }
-
                 int i = 1;
                 foreach (Template templ in flows.Template)
                 {
                     ushort templateID = templ.ID;
                     ushort templateCount = templ.Count;
+                    
+                    NetFlowPI.Data.NetFlow netflowData = new NetFlowPI.Data.NetFlow();
 
-                    ret += i + "\tTemplate:" + "\r\n"
-                        + "\tID: " + templ.ID + "\r\n"
-                        + "\tCount: " + templ.Count + "\r\n";
+                    netflowData.NetFlowID = Guid.NewGuid(); //this is just a generic, unique ID field for each entry
+
+                    //set the properties via the variables above
+                    netflowData.NetFlowPacket = packet;
+                    netflowData.Version = version;
+                    netflowData.Count = count;
+                    netflowData.UpTime = uptime;
+                    netflowData.Secs = secs;
+                    netflowData.Sequence = sequence;
+                    netflowData.ID = ID;
+                    netflowData.FlowsetNum = a;
+                    netflowData.FlowID = flowID;
+                    netflowData.TemplateID = templateID;
+                    netflowData.TemplateCount = templateCount;
+
                     foreach (Field fields in templ.Field)
                     {
-                        NetFlowPI.Data.NetFlow netflowData = new NetFlowPI.Data.NetFlow();
-
-                        ret += "\t\t" + fields.Type + ": ";
-
-                        if (fields.Value.Count == 0) ret += "\r\n";
-
                         if ((fields.GetTypes() == (UInt16)FieldType.IPV4_DST_ADDR) ||
                             (fields.GetTypes() == (UInt16)FieldType.IPV4_SRC_ADDR) ||
                             (fields.GetTypes() == (UInt16)FieldType.IPV4_NEXT_HOP) ||
@@ -200,32 +191,58 @@ namespace System.Net.NetFlow
                             (fields.GetTypes() == (UInt16)FieldType.IPV6_SRC_ADDR) ||
                             (fields.GetTypes() == (UInt16)FieldType.IPV6_NEXT_HOP))
                         {
-                            if (fields.Value.Count != 0) ret += new IPAddress(fields.Value.ToArray()).ToString();
-                            string ip = new IPAddress(fields.Value.ToArray()).ToString();
-                            netflowData
+                            if (fields.Value.Count != 0)
+                            {
+                                string ip = new IPAddress(fields.Value.ToArray()).ToString();
+                                CommonFunctions.SetObjectProperty(fields.Type, ip, netflowData);
+                            } 
                         }
-                        else if ((fields.GetTypes() == (UInt16)FieldType.L4_DST_PORT) ||
-                            (fields.GetTypes() == (UInt16)FieldType.L4_SRC_PORT))
+                        else if ((fields.GetTypes() == (UInt16)FieldType.L4_DST_PORT) || (fields.GetTypes() == (UInt16)FieldType.L4_SRC_PORT))
                         {
-                            if (fields.Value.Count != 0) ret += BitConverter.ToUInt16(fields.Value.ToArray().Reverse().ToArray(), 0);
+                            if (fields.Value.Count != 0)
+                            {
+                                ushort portValue = BitConverter.ToUInt16(fields.Value.ToArray().Reverse().ToArray(), 0);
+                                CommonFunctions.SetObjectProperty(fields.Type, portValue, netflowData);
+                            }
                         }
                         else
                         {
-
-                            foreach (Byte bt in fields.Value)
+                            //string temp = "";
+                            //foreach (Byte bt in fields.Value)
+                            //{
+                            //    temp += "0x" + bt.ToString("X") + " ";
+                            //}
+                            if (fields.Value.Count > 0)
                             {
-                                ret += "0x" + bt.ToString("X") + " ";
+                                byte[] ta = fields.Value.ToArray();
+                                byte[] tar = ta.Reverse().ToArray();
+                                ushort value = 0;
+
+                                if (tar.Length == 1)
+                                {
+                                    int valueInt = (int)tar[0];
+                                    value = (ushort)valueInt;
+                                }
+                                else
+                                {
+                                    value = BitConverter.ToUInt16(tar, 0);
+                                }
+                                
+                                CommonFunctions.SetObjectProperty(fields.Type, value, netflowData);
                             }
-                        }
+                            
+                        }//end if
+                    }//end foreach field
 
-                        if (fields.Value.Count != 0) ret += "\r\n";
+                    if (templ.Field.Count > 0)
+                    {
+                        df.writeData(netflowData);
+                        //Console.WriteLine("Writting flow data to the database");
                     }
-
+                    
                     i++;
                 }
-            }
-
-            return ret;
-        }
+            }//end for each flowset
+        }//end write to DB
     }
 }

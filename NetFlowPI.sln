@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetFlowPI", "NetFlowPI.csproj", "{268A3E60-9EA7-4038-9D83-358091E517C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SysLogServer", "..\SysLogServer\SysLogServer.csproj", "{DD83AF80-BC52-4470-8003-CC97BB191DE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{268A3E60-9EA7-4038-9D83-358091E517C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{268A3E60-9EA7-4038-9D83-358091E517C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{268A3E60-9EA7-4038-9D83-358091E517C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD83AF80-BC52-4470-8003-CC97BB191DE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD83AF80-BC52-4470-8003-CC97BB191DE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD83AF80-BC52-4470-8003-CC97BB191DE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD83AF80-BC52-4470-8003-CC97BB191DE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
